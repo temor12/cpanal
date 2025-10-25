@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم موقع عصام</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--dark-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo h1 {
+            font-size: 2rem;
+            margin-right: 15px;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        .logo span {
+            color: var(--accent-color);
+        }
+        
+        .location {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+            background: rgba(52, 152, 219, 0.1);
+            padding: 8px 15px;
+            border-radius: 30px;
+            display: none; /* إخفاء موقع خط القاهرة */
+        }
+        
+        main {
+            padding: 0;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 0 0 15px 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .left-panel {
+            background: rgba(52, 152, 219, 0.05);
+            padding: 2rem;
+            border-left: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .right-panel {
+            padding: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.8rem;
+            margin-bottom: 1.8rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid var(--light-color);
+            font-weight: 700;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card h2 i {
+            margin-left: 10px;
+            color: var(--secondary-color);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.7rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--secondary-color);
+            color: white;
+            padding: 1rem 1.8rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn i {
+            margin-left: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--secondary-color);
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .btn-danger {
+            background: var(--accent-color);
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        
+        .buttons-list {
+            list-style: none;
+        }
+        
+        .button-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem;
+            background: var(--light-color);
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            border-right: 5px solid var(--secondary-color);
+            transition: all 0.3s;
+        }
+        
+        .button-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .button-info {
+            flex-grow: 1;
+        }
+        
+        .button-name {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+        
+        .button-url {
+            display: none; /* إخفاء عرض الرابط */
+        }
+        
+        .button-actions {
+            display: flex;
+            gap: 0.7rem;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #7f8c8d;
+            font-style: italic;
+            background: rgba(236, 240, 241, 0.5);
+            border-radius: 10px;
+            border: 2px dashed #bdc3c7;
+        }
+        
+        .empty-message i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #bdc3c7;
+            display: block;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 1.2rem 1.8rem;
+            background: var(--success-color);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transform: translateX(150%);
+            transition: transform 0.4s;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        
+        .notification i {
+            margin-left: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: var(--accent-color);
+        }
+        
+        .notification.warning {
+            background: var(--warning-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* تأثيرات إضافية */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(52, 152, 219, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(52, 152, 219, 0);
+            }
+        }
+        
+        .button-date {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <h1>لوحة تحكم موقع <span>عصام</span></h1>
+                </div>
+                <!-- تم إزالة موقع خط القاهرة -->
+            </div>
+        </header>
+        
+        <main>
+            <div class="dashboard">
+                <div class="left-panel">
+                    <div class="card">
+                        <h2><i class="fas fa-plus-circle"></i> إضافة زر جديد</h2>
+                        <form id="addButtonForm">
+                            <div class="form-group">
+                                <label for="buttonName"><i class="fas fa-tag"></i> اسم الزر</label>
+                                <input type="text" id="buttonName" class="form-control" placeholder="أدخل اسم الزر" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="buttonUrl"><i class="fas fa-link"></i> رابط الزر</label>
+                                <input type="url" id="buttonUrl" class="form-control" placeholder="https://example.com" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary pulse">
+                                <i class="fas fa-plus"></i> إضافة الزر
+                            </button>
+                        </form>
+                        
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-warning" id="clearAll">
+                                <i class="fas fa-trash-alt"></i> مسح الكل
+                            </button>
+                            <button type="button" class="btn btn-success" id="exportButtons">
+                                <i class="fas fa-download"></i> تصدير
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalButtons">0</div>
+                            <div class="stat-label">إجمالي الأزرار</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="activeButtons">0</div>
+                            <div class="stat-label">الأزرار النشطة</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="todayButtons">0</div>
+                            <div class="stat-label">مضاف اليوم</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="right-panel">
+                    <div class="card">
+                        <h2><i class="fas fa-list"></i> الأزرار المضافة</h2>
+                        <div id="buttonsContainer">
+                            <div class="empty-message">
+                                <i class="fas fa-inbox"></i>
+                                لا توجد أزرار مضافة بعد. قم بإضافة زر جديد.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText"></span>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addButtonForm = document.getElementById('addButtonForm');
+            const buttonsContainer = document.getElementById('buttonsContainer');
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            const clearAllBtn = document.getElementById('clearAll');
+            const exportButtonsBtn = document.getElementById('exportButtons');
+            const totalButtonsEl = document.getElementById('totalButtons');
+            const activeButtonsEl = document.getElementById('activeButtons');
+            const todayButtonsEl = document.getElementById('todayButtons');
+            
+            // تحميل الأزرار من localStorage عند بدء التحميل
+            loadButtons();
+            updateStats();
+            
+            // إضافة زر جديد
+            addButtonForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const buttonName = document.getElementById('buttonName').value.trim();
+                const buttonUrl = document.getElementById('buttonUrl').value.trim();
+                
+                if (buttonName && buttonUrl) {
+                    // التأكد من أن الرابط يبدأ بـ http:// أو https://
+                    const fullUrl = buttonUrl.startsWith('http') ? buttonUrl : `https://${buttonUrl}`;
+                    
+                    addButton(buttonName, fullUrl);
+                    addButtonForm.reset();
+                    showNotification('تم إضافة الزر بنجاح!');
+                } else {
+                    showNotification('يرجى ملء جميع الحقول!', 'error');
+                }
+            });
+            
+            // مسح جميع الأزرار
+            clearAllBtn.addEventListener('click', function() {
+                if (confirm('هل أنت متأكد من رغبتك في مسح جميع الأزرار؟')) {
+                    clearAllButtons();
+                    showNotification('تم مسح جميع الأزرار بنجاح!', 'warning');
+                }
+            });
+            
+            // تصدير الأزرار
+            exportButtonsBtn.addEventListener('click', function() {
+                exportButtons();
+            });
+            
+            // دالة إضافة زر
+            function addButton(name, url) {
+                let buttons = getButtonsFromStorage();
+                
+                const newButton = {
+                    id: Date.now(),
+                    name: name,
+                    url: url,
+                    date: new Date().toISOString(),
+                    active: true
+                };
+                
+                buttons.push(newButton);
+                saveButtonsToStorage(buttons);
+                displayButtons();
+                updateStats();
+            }
+            
+            // دالة حذف زر
+            function deleteButton(id) {
+                let buttons = getButtonsFromStorage();
+                buttons = buttons.filter(button => button.id !== id);
+                saveButtonsToStorage(buttons);
+                displayButtons();
+                updateStats();
+                showNotification('تم حذف الزر بنجاح!', 'warning');
+            }
+            
+            // دالة تبديل حالة الزر (نشط/غير نشط)
+            function toggleButton(id) {
+                let buttons = getButtonsFromStorage();
+                buttons = buttons.map(button => {
+                    if (button.id === id) {
+                        button.active = !button.active;
+                    }
+                    return button;
+                });
+                saveButtonsToStorage(buttons);
+                displayButtons();
+                updateStats();
+                showNotification('تم تغيير حالة الزر!');
+            }
+            
+            // دالة مسح جميع الأزرار
+            function clearAllButtons() {
+                saveButtonsToStorage([]);
+                displayButtons();
+                updateStats();
+            }
+            
+            // دالة تصدير الأزرار
+            function exportButtons() {
+                const buttons = getButtonsFromStorage();
+                if (buttons.length === 0) {
+                    showNotification('لا توجد أزرار لتصديرها!', 'error');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(buttons, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = 'أزرار موقع عصام.json';
+                link.click();
+                
+                showNotification('تم تصدير الأزرار بنجاح!');
+            }
+            
+            // دالة عرض الأزرار
+            function displayButtons() {
+                const buttons = getButtonsFromStorage();
+                
+                if (buttons.length === 0) {
+                    buttonsContainer.innerHTML = `
+                        <div class="empty-message">
+                            <i class="fas fa-inbox"></i>
+                            لا توجد أزرار مضافة بعد. قم بإضافة زر جديد.
+                        </div>`;
+                    return;
+                }
+                
+                buttonsContainer.innerHTML = '';
+                const buttonsList = document.createElement('ul');
+                buttonsList.className = 'buttons-list';
+                
+                // ترتيب الأزرار من الأحدث إلى الأقدم
+                buttons.sort((a, b) => b.id - a.id);
+                
+                buttons.forEach(button => {
+                    const buttonItem = document.createElement('li');
+                    buttonItem.className = 'button-item';
+                    if (!button.active) {
+                        buttonItem.style.opacity = '0.7';
+                        buttonItem.style.borderRightColor = '#95a5a6';
+                    }
+                    
+                    buttonItem.innerHTML = `
+                        <div class="button-info">
+                            <div class="button-name">${button.name} ${!button.active ? '<span style="color:#e74c3c;font-size:0.8rem;">(غير نشط)</span>' : ''}</div>
+                            <!-- تم إخفاء عرض الرابط -->
+                            <div class="button-date">
+                                ${new Date(button.date).toLocaleDateString('ar-EG')}
+                            </div>
+                        </div>
+                        <div class="button-actions">
+                            <a href="${button.url}" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-external-link-alt"></i> زيارة
+                            </a>
+                            <button class="btn ${button.active ? 'btn-warning' : 'btn-success'}" onclick="toggleButton(${button.id})">
+                                <i class="fas ${button.active ? 'fa-eye-slash' : 'fa-eye'}"></i> ${button.active ? 'إخفاء' : 'إظهار'}
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteButton(${button.id})">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
+                    `;
+                    
+                    buttonsList.appendChild(buttonItem);
+                });
+                
+                buttonsContainer.appendChild(buttonsList);
+            }
+            
+            // دالة تحديث الإحصائيات
+            function updateStats() {
+                const buttons = getButtonsFromStorage();
+                const today = new Date().toDateString();
+                
+                totalButtonsEl.textContent = buttons.length;
+                activeButtonsEl.textContent = buttons.filter(btn => btn.active).length;
+                todayButtonsEl.textContent = buttons.filter(btn => 
+                    new Date(btn.date).toDateString() === today
+                ).length;
+            }
+            
+            // دالة تحميل الأزرار من localStorage
+            function loadButtons() {
+                displayButtons();
+            }
+            
+            // دالة الحصول على الأزرار من localStorage
+            function getButtonsFromStorage() {
+                return JSON.parse(localStorage.getItem('buttons')) || [];
+            }
+            
+            // دالة حفظ الأزرار في localStorage
+            function saveButtonsToStorage(buttons) {
+                localStorage.setItem('buttons', JSON.stringify(buttons));
+            }
+            
+            // دالة عرض الإشعارات
+            function showNotification(message, type = 'success') {
+                notificationText.textContent = message;
+                notification.className = 'notification';
+                
+                // إعداد الأيقونة بناءً على نوع الإشعار
+                let iconClass = 'fas fa-check-circle';
+                if (type === 'error') {
+                    iconClass = 'fas fa-exclamation-circle';
+                } else if (type === 'warning') {
+                    iconClass = 'fas fa-exclamation-triangle';
+                }
+                
+                notification.innerHTML = `<i class="${iconClass}"></i><span id="notificationText">${message}</span>`;
+                notification.classList.add(type);
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // جعل الدوال متاحة عالمياً
+            window.deleteButton = deleteButton;
+            window.toggleButton = toggleButton;
+        });
+    </script>
+</body>
+</html>
