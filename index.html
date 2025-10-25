@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة تحكم موقع عصام</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5tZKfO84SkVuGWQvrrhdREdbJ6azzQ6M",
+            authDomain: "newall-dd7c6.firebaseapp.com",
+            projectId: "newall-dd7c6",
+            storageBucket: "newall-dd7c6.firebasestorage.app",
+            messagingSenderId: "912535071003",
+            appId: "1:912535071003:web:8975d567f5ff6a26084bbe",
+            measurementId: "G-KX6WTZMHMZ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+        
+        // جعل Firebase متاحاً عالمياً
+        window.firebaseApp = {
+            db,
+            collection,
+            addDoc,
+            getDocs,
+            deleteDoc,
+            doc,
+            updateDoc,
+            onSnapshot
+        };
+    </script>
+
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -66,14 +103,23 @@
             color: var(--accent-color);
         }
         
-        .location {
-            font-size: 1rem;
-            color: var(--secondary-color);
-            font-weight: 600;
-            background: rgba(52, 152, 219, 0.1);
-            padding: 8px 15px;
-            border-radius: 30px;
-            display: none; /* إخفاء موقع خط القاهرة */
+        .firebase-status {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 15px;
+            background: #e8f5e8;
+            color: #2e7d32;
+            display: flex;
+            align-items: center;
+        }
+        
+        .firebase-status.offline {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .firebase-status i {
+            margin-left: 5px;
         }
         
         main {
@@ -184,6 +230,13 @@
             box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
         }
         
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .btn i {
             margin-left: 8px;
         }
@@ -241,6 +294,11 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
         
+        .button-item.inactive {
+            opacity: 0.7;
+            border-right-color: #95a5a6;
+        }
+        
         .button-info {
             flex-grow: 1;
         }
@@ -253,7 +311,7 @@
         }
         
         .button-url {
-            display: none; /* إخفاء عرض الرابط */
+            display: none;
         }
         
         .button-actions {
@@ -345,9 +403,19 @@
             margin-top: 1.5rem;
         }
         
-        /* تأثيرات إضافية */
-        .pulse {
-            animation: pulse 2s infinite;
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         @keyframes pulse {
@@ -367,6 +435,10 @@
             color: #7f8c8d;
             margin-top: 5px;
         }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -377,7 +449,10 @@
                 <div class="logo">
                     <h1>لوحة تحكم موقع <span>عصام</span></h1>
                 </div>
-                <!-- تم إزالة موقع خط القاهرة -->
+                <div class="firebase-status" id="firebaseStatus">
+                    <i class="fas fa-sync fa-spin"></i>
+                    جاري الاتصال...
+                </div>
             </div>
         </header>
         
@@ -395,7 +470,7 @@
                                 <label for="buttonUrl"><i class="fas fa-link"></i> رابط الزر</label>
                                 <input type="url" id="buttonUrl" class="form-control" placeholder="https://example.com" required>
                             </div>
-                            <button type="submit" class="btn btn-primary pulse">
+                            <button type="submit" class="btn btn-primary pulse" id="submitButton">
                                 <i class="fas fa-plus"></i> إضافة الزر
                             </button>
                         </form>
@@ -403,9 +478,6 @@
                         <div class="action-buttons">
                             <button type="button" class="btn btn-warning" id="clearAll">
                                 <i class="fas fa-trash-alt"></i> مسح الكل
-                            </button>
-                            <button type="button" class="btn btn-success" id="exportButtons">
-                                <i class="fas fa-download"></i> تصدير
                             </button>
                         </div>
                     </div>
@@ -451,20 +523,27 @@
             const addButtonForm = document.getElementById('addButtonForm');
             const buttonsContainer = document.getElementById('buttonsContainer');
             const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
             const clearAllBtn = document.getElementById('clearAll');
-            const exportButtonsBtn = document.getElementById('exportButtons');
+            const submitButton = document.getElementById('submitButton');
             const totalButtonsEl = document.getElementById('totalButtons');
             const activeButtonsEl = document.getElementById('activeButtons');
             const todayButtonsEl = document.getElementById('todayButtons');
+            const firebaseStatus = document.getElementById('firebaseStatus');
             
-            // تحميل الأزرار من localStorage عند بدء التحميل
-            loadButtons();
-            updateStats();
+            let buttons = [];
+            let firebaseInitialized = false;
+            
+            // تهيئة Firebase والاستماع للتغييرات
+            initializeFirebase();
             
             // إضافة زر جديد
-            addButtonForm.addEventListener('submit', function(e) {
+            addButtonForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+                
+                if (!firebaseInitialized) {
+                    showNotification('Firebase غير مهيئ بعد!', 'error');
+                    return;
+                }
                 
                 const buttonName = document.getElementById('buttonName').value.trim();
                 const buttonUrl = document.getElementById('buttonUrl').value.trim();
@@ -473,100 +552,191 @@
                     // التأكد من أن الرابط يبدأ بـ http:// أو https://
                     const fullUrl = buttonUrl.startsWith('http') ? buttonUrl : `https://${buttonUrl}`;
                     
-                    addButton(buttonName, fullUrl);
+                    await addButton(buttonName, fullUrl);
                     addButtonForm.reset();
-                    showNotification('تم إضافة الزر بنجاح!');
                 } else {
                     showNotification('يرجى ملء جميع الحقول!', 'error');
                 }
             });
             
             // مسح جميع الأزرار
-            clearAllBtn.addEventListener('click', function() {
-                if (confirm('هل أنت متأكد من رغبتك في مسح جميع الأزرار؟')) {
-                    clearAllButtons();
-                    showNotification('تم مسح جميع الأزرار بنجاح!', 'warning');
-                }
-            });
-            
-            // تصدير الأزرار
-            exportButtonsBtn.addEventListener('click', function() {
-                exportButtons();
-            });
-            
-            // دالة إضافة زر
-            function addButton(name, url) {
-                let buttons = getButtonsFromStorage();
-                
-                const newButton = {
-                    id: Date.now(),
-                    name: name,
-                    url: url,
-                    date: new Date().toISOString(),
-                    active: true
-                };
-                
-                buttons.push(newButton);
-                saveButtonsToStorage(buttons);
-                displayButtons();
-                updateStats();
-            }
-            
-            // دالة حذف زر
-            function deleteButton(id) {
-                let buttons = getButtonsFromStorage();
-                buttons = buttons.filter(button => button.id !== id);
-                saveButtonsToStorage(buttons);
-                displayButtons();
-                updateStats();
-                showNotification('تم حذف الزر بنجاح!', 'warning');
-            }
-            
-            // دالة تبديل حالة الزر (نشط/غير نشط)
-            function toggleButton(id) {
-                let buttons = getButtonsFromStorage();
-                buttons = buttons.map(button => {
-                    if (button.id === id) {
-                        button.active = !button.active;
-                    }
-                    return button;
-                });
-                saveButtonsToStorage(buttons);
-                displayButtons();
-                updateStats();
-                showNotification('تم تغيير حالة الزر!');
-            }
-            
-            // دالة مسح جميع الأزرار
-            function clearAllButtons() {
-                saveButtonsToStorage([]);
-                displayButtons();
-                updateStats();
-            }
-            
-            // دالة تصدير الأزرار
-            function exportButtons() {
-                const buttons = getButtonsFromStorage();
-                if (buttons.length === 0) {
-                    showNotification('لا توجد أزرار لتصديرها!', 'error');
+            clearAllBtn.addEventListener('click', async function() {
+                if (!firebaseInitialized) {
+                    showNotification('Firebase غير مهيئ بعد!', 'error');
                     return;
                 }
                 
-                const dataStr = JSON.stringify(buttons, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                if (confirm('هل أنت متأكد من رغبتك في مسح جميع الأزرار؟')) {
+                    await clearAllButtons();
+                }
+            });
+            
+            // دالة تهيئة Firebase
+            async function initializeFirebase() {
+                try {
+                    // الانتظار حتى يتم تحميل Firebase
+                    let attempts = 0;
+                    const maxAttempts = 50; // 5 ثواني كحد أقصى
+                    
+                    const waitForFirebase = () => {
+                        return new Promise((resolve, reject) => {
+                            const checkFirebase = () => {
+                                attempts++;
+                                if (window.firebaseApp) {
+                                    resolve(window.firebaseApp);
+                                } else if (attempts >= maxAttempts) {
+                                    reject(new Error('انتهت محاولات الاتصال بـ Firebase'));
+                                } else {
+                                    setTimeout(checkFirebase, 100);
+                                }
+                            };
+                            checkFirebase();
+                        });
+                    };
+                    
+                    const firebaseApp = await waitForFirebase();
+                    firebaseInitialized = true;
+                    
+                    // تحديث حالة الاتصال
+                    firebaseStatus.innerHTML = '<i class="fas fa-check-circle"></i> متصل بـ Firebase';
+                    firebaseStatus.classList.remove('offline');
+                    
+                    // تحميل البيانات الأولية والاشتراك في التحديثات
+                    await loadButtons();
+                    setupRealtimeListener();
+                    
+                    showNotification('تم الاتصال بـ Firebase بنجاح!');
+                    
+                } catch (error) {
+                    console.error('خطأ في تهيئة Firebase:', error);
+                    firebaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> غير متصل بـ Firebase';
+                    firebaseStatus.classList.add('offline');
+                    showNotification('فشل الاتصال بـ Firebase!', 'error');
+                }
+            }
+            
+            // دالة إعداد الاستماع للتحديثات الفورية
+            function setupRealtimeListener() {
+                const { db, collection, onSnapshot } = window.firebaseApp;
                 
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(dataBlob);
-                link.download = 'أزرار موقع عصام.json';
-                link.click();
-                
-                showNotification('تم تصدير الأزرار بنجاح!');
+                onSnapshot(collection(db, "buttons"), (snapshot) => {
+                    buttons = [];
+                    snapshot.forEach((doc) => {
+                        buttons.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    displayButtons();
+                    updateStats();
+                }, (error) => {
+                    console.error('خطأ في الاستماع للتحديثات:', error);
+                    showNotification('فشل في تحديث البيانات!', 'error');
+                });
+            }
+            
+            // دالة إضافة زر
+            async function addButton(name, url) {
+                try {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<div class="loading"></div> جاري الإضافة...';
+                    
+                    const { db, collection, addDoc } = window.firebaseApp;
+                    
+                    const newButton = {
+                        name: name,
+                        url: url,
+                        date: new Date().toISOString(),
+                        active: true
+                    };
+                    
+                    await addDoc(collection(db, "buttons"), newButton);
+                    showNotification('تم إضافة الزر بنجاح!');
+                    
+                } catch (error) {
+                    console.error('خطأ في إضافة الزر:', error);
+                    showNotification('فشل في إضافة الزر!', 'error');
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-plus"></i> إضافة الزر';
+                }
+            }
+            
+            // دالة حذف زر
+            async function deleteButton(id) {
+                try {
+                    const { db, doc, deleteDoc } = window.firebaseApp;
+                    await deleteDoc(doc(db, "buttons", id));
+                    showNotification('تم حذف الزر بنجاح!', 'warning');
+                } catch (error) {
+                    console.error('خطأ في حذف الزر:', error);
+                    showNotification('فشل في حذف الزر!', 'error');
+                }
+            }
+            
+            // دالة تبديل حالة الزر
+            async function toggleButton(id) {
+                try {
+                    const { db, doc, updateDoc } = window.firebaseApp;
+                    const button = buttons.find(btn => btn.id === id);
+                    
+                    if (button) {
+                        await updateDoc(doc(db, "buttons", id), {
+                            active: !button.active
+                        });
+                        showNotification('تم تغيير حالة الزر!');
+                    }
+                } catch (error) {
+                    console.error('خطأ في تحديث حالة الزر:', error);
+                    showNotification('فشل في تغيير حالة الزر!', 'error');
+                }
+            }
+            
+            // دالة مسح جميع الأزرار
+            async function clearAllButtons() {
+                try {
+                    const { db, collection, getDocs, doc, deleteDoc } = window.firebaseApp;
+                    
+                    const querySnapshot = await getDocs(collection(db, "buttons"));
+                    const deletePromises = [];
+                    
+                    querySnapshot.forEach((docSnapshot) => {
+                        deletePromises.push(deleteDoc(doc(db, "buttons", docSnapshot.id)));
+                    });
+                    
+                    await Promise.all(deletePromises);
+                    showNotification('تم مسح جميع الأزرار بنجاح!', 'warning');
+                } catch (error) {
+                    console.error('خطأ في مسح الأزرار:', error);
+                    showNotification('فشل في مسح الأزرار!', 'error');
+                }
+            }
+            
+            // دالة تحميل الأزرار
+            async function loadButtons() {
+                try {
+                    const { db, collection, getDocs } = window.firebaseApp;
+                    
+                    const querySnapshot = await getDocs(collection(db, "buttons"));
+                    buttons = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        buttons.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    displayButtons();
+                    updateStats();
+                } catch (error) {
+                    console.error('خطأ في تحميل الأزرار:', error);
+                    showNotification('فشل في تحميل البيانات!', 'error');
+                }
             }
             
             // دالة عرض الأزرار
             function displayButtons() {
-                const buttons = getButtonsFromStorage();
-                
                 if (buttons.length === 0) {
                     buttonsContainer.innerHTML = `
                         <div class="empty-message">
@@ -581,20 +751,15 @@
                 buttonsList.className = 'buttons-list';
                 
                 // ترتيب الأزرار من الأحدث إلى الأقدم
-                buttons.sort((a, b) => b.id - a.id);
+                buttons.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
                 buttons.forEach(button => {
                     const buttonItem = document.createElement('li');
-                    buttonItem.className = 'button-item';
-                    if (!button.active) {
-                        buttonItem.style.opacity = '0.7';
-                        buttonItem.style.borderRightColor = '#95a5a6';
-                    }
+                    buttonItem.className = `button-item ${!button.active ? 'inactive' : ''}`;
                     
                     buttonItem.innerHTML = `
                         <div class="button-info">
                             <div class="button-name">${button.name} ${!button.active ? '<span style="color:#e74c3c;font-size:0.8rem;">(غير نشط)</span>' : ''}</div>
-                            <!-- تم إخفاء عرض الرابط -->
                             <div class="button-date">
                                 ${new Date(button.date).toLocaleDateString('ar-EG')}
                             </div>
@@ -603,10 +768,10 @@
                             <a href="${button.url}" target="_blank" class="btn btn-primary">
                                 <i class="fas fa-external-link-alt"></i> زيارة
                             </a>
-                            <button class="btn ${button.active ? 'btn-warning' : 'btn-success'}" onclick="toggleButton(${button.id})">
+                            <button class="btn ${button.active ? 'btn-warning' : 'btn-success'}" onclick="toggleButton('${button.id}')">
                                 <i class="fas ${button.active ? 'fa-eye-slash' : 'fa-eye'}"></i> ${button.active ? 'إخفاء' : 'إظهار'}
                             </button>
-                            <button class="btn btn-danger" onclick="deleteButton(${button.id})">
+                            <button class="btn btn-danger" onclick="deleteButton('${button.id}')">
                                 <i class="fas fa-trash"></i> حذف
                             </button>
                         </div>
@@ -620,7 +785,6 @@
             
             // دالة تحديث الإحصائيات
             function updateStats() {
-                const buttons = getButtonsFromStorage();
                 const today = new Date().toDateString();
                 
                 totalButtonsEl.textContent = buttons.length;
@@ -630,27 +794,12 @@
                 ).length;
             }
             
-            // دالة تحميل الأزرار من localStorage
-            function loadButtons() {
-                displayButtons();
-            }
-            
-            // دالة الحصول على الأزرار من localStorage
-            function getButtonsFromStorage() {
-                return JSON.parse(localStorage.getItem('buttons')) || [];
-            }
-            
-            // دالة حفظ الأزرار في localStorage
-            function saveButtonsToStorage(buttons) {
-                localStorage.setItem('buttons', JSON.stringify(buttons));
-            }
-            
             // دالة عرض الإشعارات
             function showNotification(message, type = 'success') {
+                const notificationText = document.getElementById('notificationText');
                 notificationText.textContent = message;
                 notification.className = 'notification';
                 
-                // إعداد الأيقونة بناءً على نوع الإشعار
                 let iconClass = 'fas fa-check-circle';
                 if (type === 'error') {
                     iconClass = 'fas fa-exclamation-circle';
